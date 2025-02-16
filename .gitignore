@@ -1,0 +1,9 @@
+//ignore bin and obj folders
+bin/
+obj/
+
+*.user
+*.suo
+*.vs
+.vscode/
+*.sln
