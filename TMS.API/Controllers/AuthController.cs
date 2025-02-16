@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using TMS.Application.Interfaces.Repositories;
 using TMS.Application.DTOs;
 using TMS.Domain.Entities;
+using TMS.Application.Interfaces.Services;
 
 namespace TMS.API.Controllers
 {
@@ -10,10 +11,12 @@ namespace TMS.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
+        private readonly IJwtService _jwtService;
 
-        public AuthController(IUserRepository userRepository)
+        public AuthController(IUserRepository userRepository, IJwtService jwtService)
         {
             _userRepository = userRepository;
+            _jwtService = jwtService;
         }
 
         [HttpPost("login")]
@@ -25,7 +28,9 @@ namespace TMS.API.Controllers
                 return Unauthorized(new { message = "Invalid email or password" });
             }
 
-            return Ok(new { message = "Login successful", userId = user.Id });
+            var token = _jwtService.GenerateJwtToken(user);
+
+            return Ok(new { message = "Login successful", userId = user.Id, token });
         }
 
         [HttpPost("signup")]
@@ -36,17 +41,18 @@ namespace TMS.API.Controllers
             {
                 return BadRequest(new { message = "User with this email already exists" });
             }
-
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
             var user = new User
             {
                 Name = request.Name,
                 Email = request.Email,
-                Password = request.Password  // In production, use password hashing!
+                Password = hashedPassword
             };
 
             await _userRepository.CreateUserAsync(user);
+            var token = _jwtService.GenerateJwtToken(user);
 
-            return Ok(new { message = "Signup successful", userId = user.Id });
+            return Ok(new { message = "Signup successful", userId = user.Id, token });
         }
     }
 }
