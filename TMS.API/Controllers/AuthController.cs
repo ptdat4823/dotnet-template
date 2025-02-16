@@ -23,9 +23,10 @@ namespace TMS.API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _userRepository.GetUserByEmailAsync(request.Email);
-            if (user == null || user.Password != request.Password)  // In production, use password hashing!
+
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
             {
-                return Unauthorized(new { message = "Invalid email or password" });
+                return BadRequest(new { message = "Wrong email or password" });
             }
 
             var token = _jwtService.GenerateJwtToken(user);

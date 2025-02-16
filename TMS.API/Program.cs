@@ -31,7 +31,9 @@ builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<JwtSettings>>
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings.Key);
+var secretKey = jwtSettings["Key"];
+if (string.IsNullOrEmpty(secretKey)) throw new Exception("Secret key is missing");
+var key = Encoding.UTF8.GetBytes(secretKey);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -64,5 +66,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.Run();
