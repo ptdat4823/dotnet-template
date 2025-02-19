@@ -3,6 +3,7 @@ using TMS.Application.Interfaces.Repositories;
 using TMS.Application.DTOs;
 using TMS.Domain.Entities;
 using TMS.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Identity;
 
 namespace TMS.API.Controllers
 {
@@ -10,50 +11,45 @@ namespace TMS.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
         private readonly IJwtService _jwtService;
 
-        public AuthController(IUserRepository userRepository, IJwtService jwtService)
+        public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IJwtService jwtService)
         {
-            _userRepository = userRepository;
+            _userManager = userManager;
+            _signInManager = signInManager;
             _jwtService = jwtService;
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
-            var user = await _userRepository.GetUserByEmailAsync(request.Email);
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null) return BadRequest(new { message = "Wrong email or password" });
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
-            {
-                return BadRequest(new { message = "Wrong email or password" });
-            }
+            var res = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+            if (!res.Succeeded) return BadRequest(new { message = "Wrong email or password" });
 
             var token = _jwtService.GenerateJwtToken(user);
-
-            return Ok(new { message = "Login successful", userId = user.Id, token });
+            return Ok(new { message = "Login successfully", userId = user.Id, token });
         }
 
         [HttpPost("signup")]
-        public async Task<IActionResult> Signup([FromBody] SignupRequest request)
+        public async Task<IActionResult> Signup([FromBody] SignupRequestDto request)
         {
-            var existingUser = await _userRepository.GetUserByEmailAsync(request.Email);
-            if (existingUser != null)
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var user = new AppUser
             {
-                return BadRequest(new { message = "User with this email already exists" });
-            }
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            var user = new User
-            {
-                Name = request.Name,
+                UserName = request.Username,
                 Email = request.Email,
-                Password = hashedPassword
             };
 
-            await _userRepository.CreateUserAsync(user);
-            var token = _jwtService.GenerateJwtToken(user);
+            var res = await _userManager.CreateAsync(user, request.Password);
+            if (!res.Succeeded) return BadRequest(res.Errors.Select(e => e.Description));
 
-            return Ok(new { message = "Signup successful", userId = user.Id, token });
+            var token = _jwtService.GenerateJwtToken(user);
+            return Ok(new { message = "Signup successfully", userId = user.Id, token });
         }
     }
 }

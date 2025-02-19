@@ -1,18 +1,18 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using TMS.Application.Interfaces.Repositories;
 using TMS.Application.Interfaces.Services;
-using TMS.Application.Services;
 using TMS.Infrastructure.Data;
-using TMS.Infrastructure.Repositories;
 using Microsoft.IdentityModel.Tokens;
 using TMS.API.Services;
 using TMS.API.Configurations;
 using Microsoft.Extensions.Options;
+using TMS.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure DbContext
 builder.Services.AddDbContext<AppDBContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -20,9 +20,19 @@ builder.Services.AddDbContext<AppDBContext>(options =>
     )
 );
 
+// Configure Identity
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
+})
+    .AddEntityFrameworkStores<AppDBContext>()
+    .AddDefaultTokenProviders();
+
 // 🔹 Register Dependencies
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddControllers();
 

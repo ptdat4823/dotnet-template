@@ -4,6 +4,6 @@ namespace TMS.Application.Interfaces.Services
 {
     public interface IJwtService
     {
-        string GenerateJwtToken(User user);
+        string GenerateJwtToken(AppUser user);
     }
 }
