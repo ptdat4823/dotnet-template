@@ -1,4 +1,4 @@
-namespace TMS.Application.DTOs
+namespace TMS.Application.DTOs.Auth
 {
     public class SignupRequestDto
     {

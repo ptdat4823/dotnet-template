@@ -1,9 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
-using TMS.Application.Interfaces.Repositories;
-using TMS.Application.DTOs;
-using TMS.Domain.Entities;
-using TMS.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using TMS.Application.DTOs.Auth;
+using TMS.Application.Interfaces.Services;
+using TMS.Domain.Entities;
 
 namespace TMS.API.Controllers
 {

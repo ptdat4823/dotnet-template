@@ -1,14 +1,17 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using TMS.Application.Interfaces.Services;
-using TMS.Infrastructure.Data;
-using Microsoft.IdentityModel.Tokens;
-using TMS.API.Services;
-using TMS.API.Configurations;
-using Microsoft.Extensions.Options;
-using TMS.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using TMS.API.Configurations;
+using TMS.API.Services;
+using TMS.Application.Interfaces.Repositories;
+using TMS.Application.Interfaces.Services;
+using TMS.Application.Services;
+using TMS.Domain.Entities;
+using TMS.Infrastructure.Data;
+using TMS.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +37,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 
 // 🔹 Register Dependencies
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+
 builder.Services.AddControllers();
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
